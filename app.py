@@ -9,7 +9,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS "SULTAN THEME" (INILAH RAHASIA TAMPILANNYA) ---
+# --- 2. CSS "SULTAN THEME" (UPDATE: JUDUL PUTIH) ---
 st.markdown("""
     <style>
     /* Mengubah Latar Belakang Jadi Gradasi Gelap Premium */
@@ -19,7 +19,7 @@ st.markdown("""
         color: white;
     }
     
-    /* Mengubah Warna Tombol Jadi Merah Menyala (Gradient) */
+    /* Mengubah Warna Tombol Jadi Merah-Oranye Menyala (Gradient) */
     .stButton>button {
         width: 100%;
         background: linear-gradient(45deg, #FF3131, #FF914D);
@@ -50,21 +50,25 @@ st.markdown("""
         border-radius: 10px;
     }
     
-    /* Mempercantik Judul */
+    /* UPDATE: Judul Jadi Putih Bersih + Efek Glow */
     h1 {
         text-align: center;
-        background: -webkit-linear-gradient(45deg, #00C9FF, #92FE9D);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #FFFFFF !important;
         font-weight: 800;
-        padding-bottom: 20px;
+        padding-bottom: 10px;
+        text-shadow: 0px 0px 20px rgba(255, 255, 255, 0.3); /* Efek cahaya putih lembut */
+    }
+    
+    /* Mempercantik Tulisan Label di atas kotak input */
+    .stMarkdown p {
+        font-size: 16px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- 3. KONTEN APLIKASI ---
 st.title("💎 UMKM Copywriting PRO")
-st.markdown("<p style='text-align: center; color: #94A3B8;'>Buat deskripsi produk memukau dalam hitungan detik.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #CBD5E1; font-size: 14px;'>Buat deskripsi produk memukau dalam hitungan detik.</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # --- 4. KEAMANAN ---
@@ -90,7 +94,7 @@ if api_key:
                 nama = m.name.replace("models/", "")
                 semua_model.append(nama)
         
-        # Filter Model Aman
+        # Filter Model Aman (Membuang yang eksperimental)
         model_aman = [m for m in semua_model if ("flash" in m or "pro" in m) and "exp" not in m]
         model_aman.sort(key=lambda x: "flash" not in x) 
 
