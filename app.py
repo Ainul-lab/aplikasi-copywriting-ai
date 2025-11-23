@@ -1,72 +1,80 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="Magic Desc Generator", page_icon="✨", layout="centered", initial_sidebar_state="collapsed")
+# --- 1. SETUP HALAMAN ---
+st.set_page_config(page_title="Magic Copywriting AI", page_icon="🤖")
 
-# --- CSS ---
-st.markdown("""
-    <style>
-    .stButton>button { width: 100%; background-color: #FF4B4B; color: white; padding: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.title("📱 UMKM Copywriting AI")
+st.title("📱 UMKM Copywriting AI (Auto-Detect)")
 st.markdown("---")
 
-# --- PASSWORD ---
-if st.sidebar.text_input("Kode Akses:", type="password") != "SUKSES2025":
+# --- 2. PASSWORD AKSES ---
+pwd = st.sidebar.text_input("Kode Akses:", type="password")
+if pwd != "SUKSES2025":
     st.warning("🔒 Masukkan Kode Akses di menu kiri.")
     st.stop()
 
-# --- INPUT API KEY ---
-with st.expander("⚙️ Pengaturan API Key (Wajib)", expanded=True):
-    api_key = st.text_input("Tempel API Key Gemini:", type="password")
+# --- 3. INPUT API KEY (DENGAN SCANNER OTOMATIS) ---
+st.info("ℹ️ Masukkan API Key, sistem akan otomatis mencari model yang tersedia.")
+api_key = st.text_input("Tempel API Key Gemini:", type="password")
 
-# --- PILIH MODEL (SOLUSI BIAR GAK EROR) ---
-# Ini fitur agar user bisa ganti model kalau ada yang eror
-pilihan_model = st.selectbox(
-    "Pilih Model AI (Ganti jika error):",
-    ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"],
-    index=0
-)
-st.caption("ℹ️ Saran: Gunakan '1.5-flash' untuk gratisan/cepat. Gunakan '1.0-pro' jika versi baru bermasalah.")
+# WADAH UNTUK MENYIMPAN MODEL HASIL SCAN
+model_pilihan = None 
 
-# --- INPUT PRODUK ---
+# --- BAGIAN "CERDAS"-NYA ADA DISINI ---
+if api_key:
+    try:
+        # 1. Hubungkan ke Google
+        genai.configure(api_key=api_key)
+        
+        # 2. SCANNING... (Minta daftar model ke Google)
+        daftar_model_hidup = []
+        for m in genai.list_models():
+            # Filter: Hanya ambil model yang bisa menulis teks (generateContent)
+            if 'generateContent' in m.supported_generation_methods:
+                # Bersihkan nama model (misal: models/gemini-pro -> gemini-pro)
+                nama_bersih = m.name.replace("models/", "")
+                daftar_model_hidup.append(nama_bersih)
+        
+        # 3. Tampilkan Hasil Scan di Dropdown
+        if daftar_model_hidup:
+            st.success(f"✅ Koneksi Sukses! Ditemukan {len(daftar_model_hidup)} model aktif.")
+            model_pilihan = st.selectbox("Pilih Model:", daftar_model_hidup)
+        else:
+            st.error("API Key valid, tapi akun ini tidak memiliki akses ke model teks apapun.")
+            
+    except Exception as e:
+        st.error(f"❌ API Key Salah / Gangguan Koneksi.\nError: {e}")
+
+# --- 4. INPUT PRODUK ---
+st.markdown("---")
 st.subheader("📝 Data Produk")
 nama = st.text_input("Nama Barang")
-fitur = st.text_area("Keunggulan")
-gaya = st.selectbox("Gaya Bahasa", ["Gaul/Viral", "Ramah/Sopan", "Formal/Mewah"])
+fitur = st.text_area("Fitur/Keunggulan")
+gaya = st.selectbox("Gaya Bahasa", ["Gaul/Viral", "Ramah", "Formal"])
 
-# --- TOMBOL ---
-if st.button("✨ BUAT DESKRIPSI"):
+# --- 5. EKSEKUSI ---
+if st.button("BUAT DESKRIPSI"):
     if not api_key:
-        st.error("⚠️ API Key kosong!")
-    elif not nama:
-        st.error("⚠️ Nama produk kosong!")
+        st.error("API Key wajib diisi dulu di atas!")
+    elif not model_pilihan:
+        st.error("Tunggu sampai nama model muncul di kotak pilihan.")
     else:
         try:
-            # KONFIGURASI
-            genai.configure(api_key=api_key)
-            
-            # PAKAI MODEL SESUAI PILIHAN DI ATAS
-            model = genai.GenerativeModel(pilihan_model)
+            # Pakai model hasil scan
+            model = genai.GenerativeModel(model_pilihan)
             
             prompt = f"""
-            Buatkan deskripsi produk Shopee/Tokopedia.
+            Buatkan deskripsi produk Shopee.
             Produk: {nama}
             Fitur: {fitur}
             Gaya: {gaya}
-            Format: Judul SEO, Hook, Poin Keunggulan (Emoji), Spesifikasi, CTA, Hashtag.
+            Format: Judul, Hook, Poin-poin, Hashtag.
             """
             
-            with st.spinner(f'Sedang berpikir pakai otak {pilihan_model}...'):
+            with st.spinner(f'Sedang menulis menggunakan {model_pilihan}...'):
                 response = model.generate_content(prompt)
-                st.success("Berhasil!")
+                st.success("Selesai!")
                 st.text_area("Hasil:", value=response.text, height=400)
                 
         except Exception as e:
-            st.error(f"Gagal dengan model {pilihan_model}. Coba ganti model lain di kotak pilihan atas.\n\nError teknis: {str(e)}")
-
-st.markdown("---")
-st.caption("Developed for UMKM Indonesia")
+            st.error(f"Terjadi kesalahan: {e}")
